@@ -16,26 +16,26 @@ export interface InvoiceItem {
 export interface Invoice {
     /** Unique identifier for the invoice */
     id: string;
+    /** Reference number for the invoice */
+    reference: string;
     /** ID of the company that created this invoice */
-    companyId: string;
+    company_id: string;
     /** ID of the customer this invoice belongs to */
-    customerId: string;
+    customer_id: string;
     /** ID of the batch of orders this invoice is for */
-    orderBatchId: string;
+    order_batch_id: string;
     /** ID of the template used for this invoice */
-    templateId: string;
+    template_id: string;
     /** Total amount of the invoice */
-    amount: number;
+    amount: string;
     /** Currency code (e.g., 'USD', 'EUR') */
     currency: string;
     /** Due date for the invoice */
-    dueDate: Date;
-    /** Array of items included in this invoice */
-    items: InvoiceItem[];
+    due_date: Date;
     /** Current status of the invoice */
-    status: 'draft' | 'sent' | 'paid' | 'void';
+    status: string;
     /** Creation timestamp */
-    createdAt: Date;
+    created_at: Date;
     /** Last update timestamp */
-    updatedAt: Date;
+    updated_at: Date;
 }

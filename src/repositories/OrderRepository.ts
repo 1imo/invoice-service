@@ -64,24 +64,26 @@ export class OrderRepository {
      * @returns Promise resolving to summary of orders
      */
     async getOrderSummaryByBatchId(batchId: string): Promise<{
-        totalAmount: number;
+        totalAmount: string;
         items: Array<{
             productName: string;
             quantity: number;
-            unitPrice: number;
-            totalPrice: number;
+            unitPrice: string;
+            totalPrice: string;
         }>;
     }> {
         const orders = await this.findByBatchId(batchId);
 
         const items = orders.map(order => ({
-            productName: order.productName,
+            productName: order.product_name,
             quantity: order.quantity,
-            unitPrice: order.unitPrice,
-            totalPrice: order.totalPrice
+            unitPrice: order.unit_price,
+            totalPrice: order.total_price
         }));
 
-        const totalAmount = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+        const totalAmount = orders
+            .reduce((sum, order) => sum + parseFloat(order.total_price), 0)
+            .toFixed(2);
 
         return {
             totalAmount,
@@ -100,5 +102,28 @@ export class OrderRepository {
             [customerId]
         );
         return result.rows;
+    }
+
+    async findById(id: string): Promise<Order | null> {
+        const result = await this.db.query(
+            `SELECT 
+                id,
+                batch_id,
+                customer_id,
+                company_id,
+                product_name,
+                quantity,
+                unit_price,
+                total_price,
+                status,
+                notes,
+                created_at,
+                updated_at
+            FROM "order"  
+            WHERE id = $1`,
+            [id]
+        );
+
+        return result.rows[0] || null;
     }
 } 

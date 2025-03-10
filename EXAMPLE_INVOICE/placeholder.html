@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Invoice</title>
+</head>
+<body>
+    <div class="page">
+        <div class="invoice-container">
+            <div class="header">
+                <div class="company-info">
+                    <div class="logo-placeholder">{{company.name.[0]}}</div>
+                    <div class="company-name">{{company.name}}</div>
+                </div>
+                <div class="invoice-info">
+                    <div class="invoice-title">Invoice</div>
+                    <div class="invoice-details">
+                        <div>Invoice No: <strong>{{invoice.id}}</strong></div>
+                        <div>Date: <strong>{{invoice.created_at}}</strong></div>
+                        <div>Due Date: <strong>{{invoice.due_date}}</strong></div>
+                    </div>
+                    <div class="status-badge">{{invoice.status}}</div>
+                </div>
+            </div>
+
+            <div class="parties">
+                <div class="party-details">
+                    <h3>Bill From</h3>
+                    <div class="party-name">{{company.name}}</div>
+                    <div>{{company.address_line1}}
+                         {{company.address_line2}}<br/>
+                         {{company.city}}
+                         {{company.postcode}}</div>
+                    <div>{{company.email}}</div>
+                    <div>{{company.phone}}</div>
+                </div>
+
+                <div class="party-details">
+                    <h3>Bill To</h3>
+                    <div class="party-name">{{customer.first_name}} {{customer.last_name}}</div>
+                    <div>{{customer.address_line1}}
+                         {{customer.address_line2}}<br/>
+                         {{customer.city}}
+                         {{customer.postcode}}</div>
+                    <div>{{customer.email}}</div>
+                    <div>{{customer.phone}}</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Quantity</th>
+                        <th>Base Price</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{invoice.items}}
+                </tbody>
+            </table>
+
+            <div class="totals-section">
+                <div class="payment-details">
+                    <h3>Payment Details</h3>
+                    <div class="payment-method">Bank Transfer</div>
+                    <div class="bank-info">
+                        <div>Bank: {{company.bank_name}}</div>
+                        <div>Account Name: {{company.account_name}}</div>
+                        <div>Account Number: {{company.account_number}}</div>
+                        <div>Sort Code: {{company.sort_code}}</div>
+                        <div>IBAN: {{company.iban_number}}</div>
+                    </div>
+                </div>
+
+                <div class="totals">
+                    <h3>Summary</h3>
+                    <div class="payment-method">Totals</div>
+                    <div>
+                        <div class="total-row">
+                            <span>Subtotal</span>
+                            <span>{{invoice.currency}}{{invoice.subtotal}}</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Tax (20%)</span>
+                            <span>{{invoice.currency}}{{invoice.tax}}</span>
+                        </div>
+                        <div style="margin-top: 24px; padding-top: 16px;">
+                            <div class="total-row grand-total">
+                                <span>Total Due</span>
+                                <span class="total-value">{{invoice.currency}}{{invoice.total}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div>Payment due by <span class="due-date">{{invoice.due_date}}</span></div>
+                <div class="thank-you">Thank you for your business!</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

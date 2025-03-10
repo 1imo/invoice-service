@@ -9,13 +9,13 @@ export interface Template {
     /** HTML content of the template */
     html: string;
     /** CSS styles for the template */
-    css?: string;
+    css: string;
     /** ID of the company this template belongs to */
-    companyId: string;
+    company_id: string;
     /** Whether this is the default template for the company */
-    isDefault: boolean;
+    is_default: boolean;
     /** Creation timestamp */
-    createdAt: Date;
+    created_at: Date;
     /** Last update timestamp */
-    updatedAt: Date;
+    updated_at: Date;
 } 

@@ -1,10 +1,14 @@
 import axios from 'axios';
 import { Invoice } from '../interfaces/Invoice';
+import { Order } from '../interfaces/Order';
+import { Company } from '../interfaces/Company';
 import { InvoiceRepository } from '../repositories/InvoiceRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
 import { CompanyRepository } from '../repositories/CompanyRepository';
 import { PDFGenerator } from '../utils/PDFGenerator';
 import { PaymentLinkGenerator } from '../utils/PaymentLinkGenerator';
+import { v4 as uuidv4 } from 'uuid';
+import { TemplateRepository } from '../repositories/TemplateRepository';
 
 /**
  * Service class for handling invoice-related business logic
@@ -24,7 +28,7 @@ export class InvoiceService {
     constructor(
         private readonly invoiceRepository: InvoiceRepository,
         private readonly orderRepository: OrderRepository,
-        private readonly companyRepository: CompanyRepository,
+        private readonly templateRepository: TemplateRepository,
         private readonly pdfGenerator: PDFGenerator,
         private readonly paymentLinkGenerator: PaymentLinkGenerator
     ) {
@@ -37,70 +41,53 @@ export class InvoiceService {
      * @param data - Data for the new invoice
      * @returns Promise resolving to the created invoice
      */
-    async createInvoice(data: Omit<Invoice, 'id' | 'createdAt' | 'updatedAt'>): Promise<Invoice> {
-        // Create invoice
-        const invoice = await this.invoiceRepository.create(data);
-
+    async createInvoice(data: { orderId: string; templateId: string }) {
         try {
-            // Generate PDF
-            const pdf = await this.generatePDF(invoice.id);
+            console.log('Creating invoice with data:', data);
 
-            // Get customer email from order
-            const orders = await this.orderRepository.findByBatchId(invoice.orderBatchId);
-            if (!orders || orders.length === 0) {
-                throw new Error('Order not found');
-            }
-            const customer = await this.orderRepository.findCustomerById(orders[0].customerId);
-            if (!customer) {
-                throw new Error('Customer not found');
+            // Get the template first to get company_id
+            const template = await this.templateRepository.findById(data.templateId);
+            if (!template) {
+                throw new Error(`Template not found: ${data.templateId}`);
             }
 
-            // Get company details for email
-            const company = await this.companyRepository.findById(invoice.companyId);
-            if (!company) {
-                throw new Error('Company not found');
+            // Get the initial order to get the batch_id
+            const order = await this.orderRepository.findById(data.orderId);
+            if (!order) {
+                throw new Error(`Order not found: ${data.orderId}`);
             }
 
-            const invoiceViewUrl = `${this.frontendUrl}/invoices/${invoice.id}`;
+            console.log('Order found:', order);
 
-            // Send email via contact service
-            await axios.post(
-                `${this.contactServiceUrl}/api/email/send`,
-                {
-                    credentialId: process.env.DEFAULT_EMAIL_CREDENTIAL_ID,
-                    message: {
-                        to: customer.email,
-                        subject: `Invoice ${invoice.id} from ${company.name}`,
-                        html: `
-                            <h1>Invoice from ${company.name}</h1>
-                            <p>Dear ${customer.firstName} ${customer.lastName},</p>
-                            <p>Please find attached your invoice ${invoice.id}.</p>
-                            <p>You can view your invoice online using the following link:</p>
-                            <p><a href="${invoiceViewUrl}">View Invoice</a></p>
-                            <p>If you have any questions, please don't hesitate to contact us.</p>
-                            <p>Best regards,<br>${company.name}</p>
-                        `,
-                        attachments: [{
-                            filename: `invoice-${invoice.id}.pdf`,
-                            content: pdf.toString('base64'),
-                            contentType: 'application/pdf'
-                        }]
-                    }
-                },
-                {
-                    headers: {
-                        'X-API-Key': process.env.API_KEY,
-                        'X-Service-Name': 'invoice-service',
-                        'X-Credential-Key': process.env.DEFAULT_EMAIL_CREDENTIAL_KEY
-                    }
-                }
-            );
+            // Get all orders in the same batch
+            const batchOrders = await this.orderRepository.findByBatchId(order.batch_id);
+            console.log('Batch orders found:', batchOrders);
 
-            return invoice;
+            // Calculate total price from all orders in batch and convert to string
+            const totalAmount = batchOrders
+                .reduce((sum, order) => sum + parseFloat(order.total_price), 0)
+                .toFixed(2);
+
+            const invoice: Omit<Invoice, 'id' | 'reference' | 'created_at' | 'updated_at'> = {
+                company_id: template.company_id,
+                customer_id: order.customer_id,
+                order_batch_id: order.batch_id,
+                template_id: data.templateId,
+                amount: totalAmount,
+                currency: '£',
+                due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                status: 'draft'
+            };
+
+            console.log('Creating invoice with data:', invoice);
+
+            const createdInvoice = await this.invoiceRepository.create(invoice);
+            console.log('Invoice created:', createdInvoice);
+
+            return createdInvoice;
         } catch (error) {
-            console.error('Failed to send invoice email:', error);
-            // Don't throw - email sending failure shouldn't prevent invoice creation
-            return invoice;
+            console.error('Error in createInvoice:', error);
+            throw error;
         }
     }
 

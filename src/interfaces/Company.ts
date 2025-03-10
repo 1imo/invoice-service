@@ -9,19 +9,29 @@ export interface Company {
     /** Company email */
     email: string;
     /** Company phone number */
-    phone?: string;
-    /** Company address */
-    address?: string;
+    phone: string;
     /** Name on the bank account */
-    accountName: string;
+    account_name: string;
     /** Bank account number */
-    accountNumber: string;
+    account_number: string;
     /** Bank sort code */
-    sortCode: string;
+    sort_code: string;
     /** Bank name */
-    bankName: string;
+    bank_name: string;
     /** Creation timestamp */
-    createdAt: Date;
+    created_at: Date;
     /** Last update timestamp */
-    updatedAt: Date;
+    updated_at: Date;
+    /** Company address line 1 */
+    address_line1: string;
+    /** Company address line 2 */
+    address_line2: string | null;
+    /** Company postcode */
+    postcode: string;
+    /** Company IBAN number */
+    iban_number: string | null;
+    /** Company city */
+    city: string;
+    /** Company county */
+    county: string | null;
 } 

@@ -28,21 +28,25 @@ app.use(express.json());
 app.use(cors());
 
 /**
- * Initialize service dependencies
+ * Initialize repositories
  */
+const templateRepository = new TemplateRepository();
 const orderRepository = new OrderRepository();
-const companyRepository = new CompanyRepository();
 const invoiceRepository = new InvoiceRepository();
 const pdfGenerator = new PDFGenerator();
-const paymentLinkGenerator = new PaymentLinkGenerator(process.env.PAYMENT_SERVICE_URL ?? 'http://localhost:3002');
+const paymentLinkGenerator = new PaymentLinkGenerator(process.env.PAYMENT_SERVICE_URL ?? 'http://localhost:3006');
+
+/**
+ * Initialize service dependencies
+ */
+const companyRepository = new CompanyRepository();
 const invoiceService = new InvoiceService(
     invoiceRepository,
     orderRepository,
-    companyRepository,
+    templateRepository,
     pdfGenerator,
     paymentLinkGenerator
 );
-const templateRepository = new TemplateRepository();
 
 /**
  * Create a new invoice
@@ -80,10 +84,14 @@ app.post('/api/invoices',
     serviceAuth(),
     async (req, res) => {
         try {
+            console.log('Creating invoice with data:', req.body);
             const invoice = await invoiceService.createInvoice(req.body);
             res.status(201).json(invoice);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to create invoice' });
+            console.error('Failed to create invoice:', error);
+            res.status(500).json({
+                error: error instanceof Error ? error.message : 'Failed to create invoice'
+            });
         }
     });
 
@@ -102,87 +110,124 @@ app.get('/api/invoices/:id',
                 return res.status(404).json({ error: 'Invoice not found' });
             }
 
+            console.log('Invoice found:', invoice);
+
             // Get template
-            const template = await templateRepository.findById(invoice.templateId);
+            const template = await templateRepository.findById(invoice.template_id);
             if (!template) {
                 return res.status(404).json({ error: 'Template not found' });
             }
 
             // Get company details
-            const company = await companyRepository.findById(invoice.companyId);
+            const company = await companyRepository.findById(invoice.company_id);
             if (!company) {
-                return res.status(404).json({ error: 'Company details not found' });
+                return res.status(404).json({ error: 'Company not found' });
             }
 
-            // Get order details
-            const orders = await orderRepository.findByBatchId(invoice.orderBatchId);
+            // Get orders for this invoice's batch
+            const orders = await orderRepository.findByBatchId(invoice.order_batch_id);
             if (!orders || orders.length === 0) {
                 return res.status(404).json({ error: 'Order details not found' });
             }
 
-            const order = orders[0];
+            // Calculate totals from the batch orders
+            const subtotal = orders.reduce((sum, order) =>
+                sum + parseFloat(order.total_price), 0);
+            const tax = subtotal * 0.20; // Assuming 20% tax rate
+            const total = subtotal + tax;
 
-            // Get customer details
-            const customer = await orderRepository.findCustomerById(order.customerId);
+            // Get customer details from first order (they'll all be the same customer)
+            const customer = await orderRepository.findCustomerById(orders[0].customer_id);
             if (!customer) {
                 return res.status(404).json({ error: 'Customer details not found' });
             }
 
-            // Calculate totals
-            const subtotal = invoice.items.reduce((sum, item) =>
-                sum + (item.quantity * item.unitPrice), 0);
-            const tax = subtotal * 0.20; // Assuming 20% tax rate
-            const total = subtotal + tax;
+            console.log(customer)
+            console.log(subtotal)
+            console.log(company)
 
-            // Format customer address
-            const customerAddress = [
-                customer.addressLine1,
-                customer.addressLine2,
-                customer.addressLine3,
-                customer.city,
-                customer.county,
-                customer.postcode,
-                customer.country
-            ].filter(Boolean).join('\n');
+            // Format phone number helper function
+            const formatPhoneNumber = (phone: string | null): string => {
+                if (!phone) return '';
+                // Remove all non-digit characters
+                const digits = phone.replace(/\D/g, '');
+
+                // Handle UK mobile numbers (starting with 07 or 447)
+                if (digits.startsWith('07') || digits.startsWith('447')) {
+                    const cleaned = digits.startsWith('447') ? digits.slice(2) : digits.slice(1);
+                    if (cleaned.length === 10 && cleaned.startsWith('7')) {
+                        return `+44 (0) ${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+                    }
+                }
+
+                // Handle UK landlines (starting with 02, 03, 01 or 442, 443, 441)
+                if (digits.match(/^(0[123]|44[123])/)) {
+                    const cleaned = digits.startsWith('44') ? digits.slice(2) : digits.slice(1);
+                    if (cleaned.length === 10) {
+                        return `+44 (0) ${cleaned.slice(0, 3)} ${cleaned.slice(3, 7)} ${cleaned.slice(7)}`;
+                    }
+                }
+
+                return phone; // Return original if not a UK number
+            };
 
             // Replace template variables with actual data
             let html = template.html
-                .replace('{{company.name}}', company.name)
-                .replace('{{company.address}}', company.address ?? '')
-                .replace('{{company.email}}', company.email)
-                .replace('{{company.phone}}', company.phone ?? '')
-                .replace('{{company.bank_name}}', company.bankName ?? '')
-                .replace('{{company.account_name}}', company.accountName ?? '')
-                .replace('{{company.account_number}}', company.accountNumber ?? '')
-                .replace('{{company.sort_code}}', company.sortCode ?? '')
-                .replace('{{customer.name}}', `${customer.firstName} ${customer.lastName}`)
-                .replace('{{customer.address}}', customerAddress)
-                .replace('{{customer.email}}', customer.email)
-                .replace('{{customer.phone}}', customer.phone ?? '')
-                .replace('{{invoice.id}}', invoice.id)
-                .replace('{{invoice.date}}', invoice.createdAt.toLocaleDateString())
-                .replace('{{invoice.dueDate}}', invoice.dueDate.toLocaleDateString())
-                .replace('{{invoice.subtotal}}', subtotal.toFixed(2))
-                .replace('{{invoice.tax}}', tax.toFixed(2))
-                .replace('{{invoice.total}}', total.toFixed(2))
-                .replace('{{invoice.currency}}', invoice.currency);
+                // Company address handling
+                .replaceAll('{{company.name}}', company.name)
+                .replaceAll('{{company.address_line1}}', company.address_line1 ? company.address_line2 ? company.address_line1 + ', ' : company.address_line1 : '')
+                .replaceAll('{{company.address_line2}}', company.address_line2 ? company.address_line2 : '')
+                .replaceAll('{{company.city}}', company.city)
+                .replaceAll('{{company.county}}', company.county ? company.county + '<br>' : '')
+                .replaceAll('{{company.postcode}}', company.postcode)
+                .replaceAll('{{company.email}}', company.email)
+                .replaceAll('{{company.phone}}', formatPhoneNumber(company.phone))
 
-            // Replace items table
-            const itemsHtml = invoice.items.map(item => `
-                <tr>
-                    <td>${item.description}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.unitPrice.toFixed(2)}</td>
-                    <td>${(item.quantity * item.unitPrice).toFixed(2)}</td>
-                </tr>
-            `).join('');
-            html = html.replace('{{invoice.items}}', itemsHtml);
+                // Company payment details
+                .replaceAll('{{company.bank_name}}', company.bank_name || '')
+                .replaceAll('{{company.account_name}}', company.account_name || '')
+                .replaceAll('{{company.account_number}}', company.account_number || '')
+                .replaceAll('{{company.sort_code}}', company.sort_code || '')
+                .replaceAll('{{company.iban_number}}', company.iban_number || '')
 
-            // Send response with HTML and CSS
-            res.json({
-                html,
-                css: template.css ?? ''
-            });
+                // Customer address handling
+                .replaceAll('{{customer.first_name}} {{customer.last_name}}', `${customer.first_name} ${customer.last_name}`)
+                .replaceAll('{{customer.address_line1}}', customer.address_line1 ? customer.address_line2 ? customer.address_line1 + ', ' : customer.address_line1 : '')
+                .replaceAll('{{customer.address_line2}}', customer.address_line2 ? customer.address_line2 : '')
+                .replaceAll('{{customer.city}}', customer.city)
+                .replaceAll('{{customer.county}}', customer.county ? customer.county + '<br>' : '')
+                .replaceAll('{{customer.postcode}}', customer.postcode)
+                .replaceAll('{{customer.country}}', customer.country)
+                .replaceAll('{{customer.email}}', customer.email)
+                .replaceAll('{{customer.phone}}', formatPhoneNumber(customer.phone))
+
+                .replaceAll('{{invoice.id}}', invoice.reference)
+                .replaceAll('{{invoice.created_at}}', invoice.created_at.toLocaleDateString())
+                .replaceAll('{{invoice.due_date}}', invoice.due_date.toLocaleDateString())
+                .replaceAll('{{invoice.status}}', invoice.status.toUpperCase())
+                .replaceAll('{{invoice.currency}}', invoice.currency)
+                .replaceAll('{{invoice.subtotal}}', subtotal.toFixed(2))
+                .replaceAll('{{invoice.tax}}', tax.toFixed(2))
+                .replaceAll('{{invoice.total}}', total.toFixed(2))
+                .replaceAll('{{invoice.items}}', orders.map(order => `
+                    <tr>
+                        <td>${order.product_name}</td>
+                        <td>${order.quantity}</td>
+                        <td>${invoice.currency}${parseFloat(order.unit_price).toFixed(2)}</td>
+                        <td>${invoice.currency}${parseFloat(order.total_price).toFixed(2)}</td>
+                    </tr>
+                `).join(''));
+
+            // Find the </head> tag and insert our CSS before it
+            const renderedHtml = html.replace('</head>', `
+                <style>
+                    ${template.css}
+                </style>
+            </head>`);
+
+            // Send the complete HTML document
+            res.setHeader('Content-Type', 'text/html');
+            res.send(renderedHtml);
 
         } catch (error) {
             console.error('Error building invoice template:', error);

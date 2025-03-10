@@ -5,25 +5,25 @@ export interface Order {
     /** Unique identifier for the order */
     id: string;
     /** Batch ID for grouped orders */
-    batchId: string;
+    batch_id: string;
     /** ID of the customer who placed the order */
-    customerId: string;
+    customer_id: string;
     /** ID of the company fulfilling the order */
-    companyId: string;
+    company_id: string;
     /** Name of the product */
-    productName: string;
+    product_name: string;
     /** Quantity ordered */
     quantity: number;
     /** Price per unit */
-    unitPrice: number;
+    unit_price: string;
     /** Total price for the order */
-    totalPrice: number;
+    total_price: string;
     /** Current status of the order */
     status: string;
     /** Additional notes */
-    notes?: string;
+    notes: string | null;
     /** Creation timestamp */
-    createdAt: Date;
+    created_at: Date;
     /** Last update timestamp */
-    updatedAt: Date;
+    updated_at: Date;
 } 

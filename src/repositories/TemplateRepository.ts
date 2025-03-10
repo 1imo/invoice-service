@@ -17,10 +17,10 @@ export class TemplateRepository {
      * @param template - Template data without ID and timestamps
      * @returns Promise resolving to the created template
      */
-    async create(template: Omit<Template, 'id' | 'createdAt' | 'updatedAt'>): Promise<Template> {
+    async create(template: Omit<Template, 'id' | 'created_at' | 'updated_at'>): Promise<Template> {
         const result = await this.db.query(
             'INSERT INTO templates (name, html, css, company_id, is_default) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [template.name, template.html, template.css, template.companyId, template.isDefault]
+            [template.name, template.html, template.css, template.company_id, template.is_default]
         );
         return result.rows[0];
     }
@@ -31,10 +31,14 @@ export class TemplateRepository {
      * @returns Promise resolving to the template if found, null otherwise
      */
     async findById(id: string): Promise<Template | null> {
+        console.log('Finding template with ID:', id);
+
         const result = await this.db.query(
-            'SELECT * FROM templates WHERE id = $1',
+            'SELECT * FROM templates WHERE id = $1::uuid',
             [id]
         );
+
+        console.log('Query result:', result.rows);
         return result.rows[0] || null;
     }
 
@@ -57,7 +61,7 @@ export class TemplateRepository {
      * @param template - Updated template data
      * @returns Promise resolving to the updated template
      */
-    async update(id: string, template: Partial<Omit<Template, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Template> {
+    async update(id: string, template: Partial<Omit<Template, 'id' | 'created_at' | 'updated_at'>>): Promise<Template> {
         const fields = Object.keys(template);
         const values = Object.values(template);
         const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');

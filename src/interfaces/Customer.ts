@@ -5,29 +5,31 @@ export interface Customer {
     /** Unique identifier for the customer */
     id: string;
     /** Customer's first name */
-    firstName: string;
+    first_name: string;
     /** Customer's last name */
-    lastName: string;
+    last_name: string;
     /** Customer's email */
     email: string;
     /** Customer's phone number */
-    phone?: string;
+    phone: string | null;
+    /** Customer's company ID */
+    company_id: string;
     /** First line of address */
-    addressLine1: string;
+    address_line1: string;
     /** Second line of address */
-    addressLine2?: string;
+    address_line2: string | null;
     /** Third line of address */
-    addressLine3?: string;
+    address_line3: string | null;
     /** City */
     city: string;
     /** County */
-    county?: string;
+    county: string | null;
     /** Postal code */
     postcode: string;
     /** Country */
     country: string;
     /** Creation timestamp */
-    createdAt: Date;
+    created_at: Date;
     /** Last update timestamp */
-    updatedAt: Date;
+    updated_at: Date;
 } 
