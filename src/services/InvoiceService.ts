@@ -45,7 +45,7 @@ export class InvoiceService {
         try {
             console.log('Creating invoice with data:', data);
 
-            // Get the template first to get company_id
+            // Get the template first to get company_id and credential_id
             const template = await this.templateRepository.findById(data.templateId);
             if (!template) {
                 throw new Error(`Template not found: ${data.templateId}`);
@@ -75,6 +75,38 @@ export class InvoiceService {
 
             const createdInvoice = await this.invoiceRepository.create(invoice);
             console.log('Invoice created:', createdInvoice);
+
+            // Generate PDF
+            const pdfBuffer = await this.generatePDF(createdInvoice.id);
+            const pdfBase64 = pdfBuffer.toString('base64');
+
+            console.log(template)
+
+            // Send email via contact service
+            await axios.post(
+                `${this.contactServiceUrl}/api/email/send`,
+                {
+                    credentialId: '0393647b-adc5-4e90-a670-016f4499a162',
+                    message: {
+                        to: "timhoy05@gmail.com",
+                        subject: `Invoice #${createdInvoice.reference}`,
+                        html: `<h1>Your Invoice</h1><p>Please find your invoice #${createdInvoice.reference} attached.</p>`,
+                        attachments: [{
+                            filename: `invoice-${createdInvoice.reference}.pdf`,
+                            content: pdfBase64,
+                            contentType: 'application/pdf'
+                        }]
+                    }
+                },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': process.env.API_KEY,
+                        'X-Service-Name': 'invoice-service',
+                        'X-Credential-Key': template.credential
+                    }
+                }
+            );
 
             return createdInvoice;
         } catch (error) {

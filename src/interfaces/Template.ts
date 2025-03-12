@@ -14,6 +14,8 @@ export interface Template {
     company_id: string;
     /** Whether this is the default template for the company */
     is_default: boolean;
+    /** Email Credential Key */
+    credential: string;
     /** Creation timestamp */
     created_at: Date;
     /** Last update timestamp */

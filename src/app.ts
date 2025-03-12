@@ -130,7 +130,28 @@ app.get('/api/invoices/:id',
                 return res.status(404).json({ error: 'Order details not found' });
             }
 
-            // Calculate totals from the batch orders
+            // Calculate totals from the batch orders and merge products
+            const mergedProducts = orders.reduce((acc, order) => {
+                const existing = acc.find(p => p.product_name === order.product_name);
+                if (existing) {
+                    existing.quantity += order.quantity;
+                    existing.total_price = (parseFloat(existing.total_price) + parseFloat(order.total_price)).toString();
+                } else {
+                    acc.push({
+                        product_name: order.product_name,
+                        quantity: order.quantity,
+                        unit_price: order.unit_price,
+                        total_price: order.total_price
+                    });
+                }
+                return acc;
+            }, [] as Array<{
+                product_name: string;
+                quantity: number;
+                unit_price: string;
+                total_price: string;
+            }>);
+
             const subtotal = orders.reduce((sum, order) =>
                 sum + parseFloat(order.total_price), 0);
             const tax = subtotal * 0.20; // Assuming 20% tax rate
@@ -209,12 +230,12 @@ app.get('/api/invoices/:id',
                 .replaceAll('{{invoice.subtotal}}', subtotal.toFixed(2))
                 .replaceAll('{{invoice.tax}}', tax.toFixed(2))
                 .replaceAll('{{invoice.total}}', total.toFixed(2))
-                .replaceAll('{{invoice.items}}', orders.map(order => `
+                .replaceAll('{{invoice.items}}', mergedProducts.map(product => `
                     <tr>
-                        <td>${order.product_name}</td>
-                        <td>${order.quantity}</td>
-                        <td>${invoice.currency}${parseFloat(order.unit_price).toFixed(2)}</td>
-                        <td>${invoice.currency}${parseFloat(order.total_price).toFixed(2)}</td>
+                        <td>${product.product_name}</td>
+                        <td>${product.quantity}</td>
+                        <td>${invoice.currency}${parseFloat(product.unit_price).toFixed(2)}</td>
+                        <td>${invoice.currency}${parseFloat(product.total_price).toFixed(2)}</td>
                     </tr>
                 `).join(''));
 
