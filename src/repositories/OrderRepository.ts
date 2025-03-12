@@ -120,7 +120,7 @@ export class OrderRepository {
                 created_at,
                 updated_at
             FROM "order"  
-            WHERE id = $1`,
+            WHERE batch_id = $1`,
             [id]
         );
 

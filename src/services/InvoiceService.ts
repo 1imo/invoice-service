@@ -41,7 +41,7 @@ export class InvoiceService {
      * @param data - Data for the new invoice
      * @returns Promise resolving to the created invoice
      */
-    async createInvoice(data: { orderId: string; templateId: string }) {
+    async createInvoice(data: { orderBatchId: string; templateId: string }) {
         try {
             console.log('Creating invoice with data:', data);
 
@@ -51,16 +51,8 @@ export class InvoiceService {
                 throw new Error(`Template not found: ${data.templateId}`);
             }
 
-            // Get the initial order to get the batch_id
-            const order = await this.orderRepository.findById(data.orderId);
-            if (!order) {
-                throw new Error(`Order not found: ${data.orderId}`);
-            }
-
-            console.log('Order found:', order);
-
             // Get all orders in the same batch
-            const batchOrders = await this.orderRepository.findByBatchId(order.batch_id);
+            const batchOrders = await this.orderRepository.findByBatchId(data.orderBatchId);
             console.log('Batch orders found:', batchOrders);
 
             // Calculate total price from all orders in batch and convert to string
@@ -69,9 +61,9 @@ export class InvoiceService {
                 .toFixed(2);
 
             const invoice: Omit<Invoice, 'id' | 'reference' | 'created_at' | 'updated_at'> = {
-                company_id: template.company_id,
-                customer_id: order.customer_id,
-                order_batch_id: order.batch_id,
+                company_id: batchOrders[0].company_id,
+                customer_id: batchOrders[0].customer_id,
+                order_batch_id: batchOrders[0].batch_id,
                 template_id: data.templateId,
                 amount: totalAmount,
                 currency: '£',
