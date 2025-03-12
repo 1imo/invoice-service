@@ -34,4 +34,6 @@ export interface Company {
     city: string;
     /** Company county */
     county: string | null;
+    /** Company Website */
+    website: string | null
 } 

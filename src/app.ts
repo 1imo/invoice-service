@@ -199,10 +199,12 @@ app.get('/api/invoices/:id',
                 .replaceAll('{{company.address_line1}}', company.address_line1 ? company.address_line2 ? company.address_line1 + ', ' : company.address_line1 : '')
                 .replaceAll('{{company.address_line2}}', company.address_line2 ? company.address_line2 : '')
                 .replaceAll('{{company.city}}', company.city)
-                .replaceAll('{{company.county}}', company.county ? company.county + '<br>' : '')
+                .replaceAll('{{company.county}}', company.county ? company.county : '')
                 .replaceAll('{{company.postcode}}', company.postcode)
                 .replaceAll('{{company.email}}', company.email)
                 .replaceAll('{{company.phone}}', formatPhoneNumber(company.phone))
+                .replaceAll('{{company.website}}', company.website || '')
+                .replace('{{company.logo}}', `${process.env.IMAGE_SERVICE_URL}/api/media/company-logo/file/${company.id}`)
 
                 // Company payment details
                 .replaceAll('{{company.bank_name}}', company.bank_name || '')
@@ -234,8 +236,8 @@ app.get('/api/invoices/:id',
                     <tr>
                         <td>${product.product_name}</td>
                         <td>${product.quantity}</td>
-                        <td>${invoice.currency}${parseFloat(product.unit_price).toFixed(2)}</td>
-                        <td>${invoice.currency}${parseFloat(product.total_price).toFixed(2)}</td>
+                        <td>${parseFloat(product.unit_price).toFixed(2)}</td>
+                        <td>${parseFloat(product.total_price).toFixed(2)}</td>
                     </tr>
                 `).join(''));
 

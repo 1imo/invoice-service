@@ -47,46 +47,35 @@
         .header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 40px;
+            align-items: flex-end;
+            margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 2px solid var(--primary-light);
+            border-bottom: 1px solid var(--stroke);
         }
 
         .company-info {
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
         }
 
-        .logo-placeholder {
-            width: 40px;
-            height: 40px;
-            background-color: var(--primary);
-            border-radius: 6px;
-            margin-right: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
+        .company-info img {
+            height: 48px;
+            width: auto;
+            margin-bottom: 16px;
         }
 
-        .company-name {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--primary);
+        .invoice-number {
+            font-size: 14px;
+            color: var(--text-light);
         }
 
         .invoice-info {
             text-align: right;
-        }
-
-        .invoice-title {
-            font-size: 28px;
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin-bottom: 12px;
-            color: var(--primary);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
         }
 
         .invoice-details {
@@ -95,7 +84,11 @@
         }
 
         .invoice-details div {
-            margin: 6px 0;
+            margin-bottom: 6px;
+        }
+
+        .invoice-details div:first-child {
+            margin-top: 0;
         }
 
         .status-badge {
@@ -113,12 +106,12 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 40px;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .party-details {
-            padding: 20px;
-            background-color: var(--accent);
+            padding: 0;
+            background-color: transparent;
             border-radius: 8px;
         }
 
@@ -158,11 +151,8 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 40px 0;
+            margin: 60px 0;
             page-break-inside: avoid;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid var(--stroke);
         }
 
         th {
@@ -171,35 +161,45 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
             text-align: left;
-            padding: 14px 16px;
-            background-color: var(--accent);
-            color: var(--text);
+            padding: 0 0 12px 0;
+            border-bottom: 1px solid var(--stroke);
+            color: var(--text-light);
         }
 
         td {
-            padding: 14px 16px;
+            padding: 24px 0;
             font-size: 14px;
-            border-top: 1px solid var(--stroke);
+            border-top: none;
         }
 
-        th:not(:first-child), td:not(:first-child) {
-            text-align: right;
+        .qr-code {
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 12px;
         }
 
-        tr:nth-child(even) {
-            background-color: var(--accent);
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+        }
+
+        tr:not(:last-child) td {
+            border-bottom: 1px solid var(--stroke);
         }
 
         .totals-section {
             display: grid;
-            grid-template-columns: 1fr auto;
+            grid-template-columns: 1fr 1fr;
             gap: 40px;
-            margin-top: 40px;
+            margin-top: 60px;
         }
 
         .payment-details {
-            padding: 20px;
-            background-color: var(--accent);
+            padding: 0;
+            background-color: transparent;
             border-radius: 8px;
         }
 
@@ -243,8 +243,8 @@
         }
 
         .totals {
-            padding: 20px;
-            background-color: var(--accent);
+            padding: 0;
+            background-color: transparent;
             border-radius: 8px;
             min-width: 250px;
         }
@@ -280,6 +280,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 14px;
+            margin: 8px 0;
         }
 
         .grand-total {
@@ -296,12 +298,25 @@
         }
 
         .footer {
-            margin-top: 60px;
+            margin-top: 80px;
             padding-top: 20px;
             border-top: 1px solid var(--stroke);
-            text-align: center;
             font-size: 13px;
             color: var(--text-light);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .footer-left {
+            text-align: left;
+        }
+
+        .footer-right {
+            text-align: right;
         }
 
         .due-date {
@@ -333,6 +348,29 @@
                 border-radius: 0;
             }
         }
+
+        tbody > tr > td,
+        .text-right {
+            text-align: right;
+        }
+
+        th {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;  /* Default left align for th */
+            padding: 0 0 8px 0;
+            background-color: transparent;
+            color: var(--text);
+            border-bottom: 1px solid var(--stroke);
+        }
+
+        td {
+            padding: 8px 0;
+            font-size: 14px;
+            border-top: none;
+        }
     </style>
 </head>
 <body>
@@ -340,23 +378,26 @@
         <div class="invoice-container">
             <div class="header">
                 <div class="company-info">
-                    <div class="logo-placeholder">A</div>
-                    <div class="company-name">Acme Corporation Ltd</div>
-                </div>
-                <div class="invoice-info">
-                    <div class="invoice-title">Invoice</div>
+                    <img 
+                        src="http://localhost:3006/api/media/company-logo/file/c3d0a47e-5f95-4161-b39f-886d07139e2e" 
+                        alt="Company Logo"
+                    />
                     <div class="invoice-details">
-                        <div>Invoice No: <strong>INV-2024-001</strong></div>
+                        <div class="invoice-number">Invoice No: <strong>INV-2024-001</strong></div>
                         <div>Date: <strong>March 14, 2024</strong></div>
                         <div>Due Date: <strong>April 13, 2024</strong></div>
                     </div>
-                    <div class="status-badge">UNPAID</div>
+                </div>
+               <div class="invoice-info">
+                    <div class="qr-code">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=INV-2024-001" alt="QR Code"/>
+                    </div>
+                    <div class="status-badge">AWAITING PAYMENT</div>
                 </div>
             </div>
 
             <div class="parties">
                 <div class="party-details">
-                    <h3>Bill From</h3>
                     <div class="party-name">Acme Corporation Ltd</div>
                     <div>123 Business Park<br>Innovation Way<br>London EC1A 1BB</div>
                     <div>accounts@acmecorp.com</div>
@@ -365,7 +406,6 @@
                 </div>
 
                 <div class="party-details">
-                    <h3>Bill To</h3>
                     <div class="party-name">John Smith</div>
                     <div>456 Client Street<br>Manchester<br>M1 1AA</div>
                     <div>john.smith@client.com</div>
@@ -378,36 +418,35 @@
                 <thead>
                     <tr>
                         <th>Description</th>
-                        <th>Quantity</th>
-                        <th>Base Price</th>
-                        <th>Amount</th>
+                        <th class="text-right">Quantity</th>
+                        <th class="text-right">Base Price</th>
+                        <th class="text-right">Amount Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>Web Development Services</td>
-                        <td>45</td>
-                        <td>£85.00</td>
-                        <td>£3,825.00</td>
+                        <td class="text-right">45</td>
+                        <td class="text-right">85.00</td>
+                        <td class="text-right">3825.00</td>
                     </tr>
                     <tr>
                         <td>UI/UX Design</td>
-                        <td>28</td>
-                        <td>£75.00</td>
-                        <td>£2,100.00</td>
+                        <td class="text-right">28</td>
+                        <td class="text-right">75.00</td>
+                        <td class="text-right">2100.00</td>
                     </tr>
                     <tr>
                         <td>Project Management</td>
-                        <td>15</td>
-                        <td>£95.00</td>
-                        <td>£1,425.00</td>
+                        <td class="text-right">15</td>
+                        <td class="text-right">95.00</td>
+                        <td class="text-right">1425.00</td>
                     </tr>
                 </tbody>
             </table>
 
             <div class="totals-section">
                 <div class="payment-details">
-                    <h3>Payment Details</h3>
                     <div class="payment-method">Bank Transfer</div>
                     <div class="bank-info">
                         <div>Bank: Barclays Bank PLC</div>
@@ -419,16 +458,15 @@
                 </div>
 
                 <div class="totals">
-                    <h3>Summary</h3>
                     <div class="payment-method">Totals</div>
                     <div>
                         <div class="total-row">
                             <span>Subtotal</span>
-                            <span>£7,350.00</span>
+                            <span>7350.00</span>
                         </div>
                         <div class="total-row">
                             <span>Tax (20%)</span>
-                            <span>£1,470.00</span>
+                            <span>1470.00</span>
                         </div>
                         <div style="margin-top: 24px; padding-top: 16px;">
                             <div class="total-row grand-total">
@@ -441,8 +479,14 @@
             </div>
 
             <div class="footer">
-                <div>Payment due by <span class="due-date">April 13, 2024</span></div>
-                <div class="thank-you">Thank you for your business!</div>
+                <div class="footer-content">
+                    <div class="footer-left">
+                        © 2024 Acme Corporation Ltd.
+                    </div>
+                    <div class="footer-right">
+                        www.acmecorp.com
+                    </div>
+                </div>
             </div>
         </div>
     </div>
