@@ -1,14 +1,12 @@
 import axios from 'axios';
 import { Invoice } from '../interfaces/Invoice';
-import { Order } from '../interfaces/Order';
-import { Company } from '../interfaces/Company';
 import { InvoiceRepository } from '../repositories/InvoiceRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
-import { CompanyRepository } from '../repositories/CompanyRepository';
 import { PDFGenerator } from '../utils/PDFGenerator';
 import { PaymentLinkGenerator } from '../utils/PaymentLinkGenerator';
-import { v4 as uuidv4 } from 'uuid';
 import { TemplateRepository } from '../repositories/TemplateRepository';
+import { CompanyRepository } from '../repositories/CompanyRepository';
+import { CustomerRepository } from '../repositories/CustomerRepository';
 
 /**
  * Service class for handling invoice-related business logic
@@ -16,12 +14,14 @@ import { TemplateRepository } from '../repositories/TemplateRepository';
 export class InvoiceService {
     private readonly contactServiceUrl: string;
     private readonly frontendUrl: string;
+    private readonly paymentServiceUrl: string;
 
     /**
      * Creates an instance of InvoiceService
      * @param invoiceRepository - Repository for invoice data persistence
      * @param orderRepository - Repository for order data persistence
      * @param companyRepository - Repository for company data persistence
+     * @param customerRepository - Repository for customer data persistence
      * @param pdfGenerator - Service for generating PDF documents
      * @param paymentLinkGenerator - Service for generating payment links
      */
@@ -29,11 +29,14 @@ export class InvoiceService {
         private readonly invoiceRepository: InvoiceRepository,
         private readonly orderRepository: OrderRepository,
         private readonly templateRepository: TemplateRepository,
+        private readonly companyRepository: CompanyRepository,
+        private readonly customerRepository: CustomerRepository,
         private readonly pdfGenerator: PDFGenerator,
         private readonly paymentLinkGenerator: PaymentLinkGenerator
     ) {
         this.contactServiceUrl = process.env.CONTACT_SERVICE_URL ?? 'http://localhost:3005';
         this.frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000';
+        this.paymentServiceUrl = process.env.PAYMENT_SERVICE_URL ?? 'http://localhost:3007';
     }
 
     /**
@@ -41,7 +44,7 @@ export class InvoiceService {
      * @param data - Data for the new invoice
      * @returns Promise resolving to the created invoice
      */
-    async createInvoice(data: { orderBatchId: string; templateId: string }) {
+    async createInvoice(data: { orderBatchId: string; templateId: string, host: string }) {
         try {
             console.log('Creating invoice with data:', data);
 
@@ -68,7 +71,8 @@ export class InvoiceService {
                 amount: totalAmount,
                 currency: '£',
                 due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                status: 'draft'
+                status: 'draft',
+                payment_intent_id: null
             };
 
             console.log('Creating invoice with data:', invoice);
@@ -76,42 +80,28 @@ export class InvoiceService {
             const createdInvoice = await this.invoiceRepository.create(invoice);
             console.log('Invoice created:', createdInvoice);
 
-            // Generate PDF
-            const pdfBuffer = await this.generatePDF(createdInvoice.id);
-            const pdfBase64 = pdfBuffer.toString('base64');
-
-            console.log(template)
-
-            // Send email via contact service
             await axios.post(
-                `${this.contactServiceUrl}/api/email/send`,
+                `${this.paymentServiceUrl}/api/payments`,
                 {
-                    credentialId: '0393647b-adc5-4e90-a670-016f4499a162',
-                    message: {
-                        to: "timhoy05@gmail.com",
-                        subject: `Invoice #${createdInvoice.reference}`,
-                        html: `<h1>Your Invoice</h1><p>Please find your invoice #${createdInvoice.reference} attached.</p>`,
-                        attachments: [{
-                            filename: `invoice-${createdInvoice.reference}.pdf`,
-                            content: pdfBase64,
-                            contentType: 'application/pdf'
-                        }]
-                    }
+                    invoiceId: createdInvoice.id,
+                    amount: parseFloat(totalAmount) * 100, // Convert to smallest currency unit (pence)
+                    currency: 'gbp',
+                    successUrl: `http://${data.host}/payment/success`,
+                    cancelUrl: `http://${data.host}/payment/cancelled`,
+                    companyId: invoice.company_id
                 },
                 {
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-API-Key': process.env.API_KEY,
-                        'X-Service-Name': 'invoice-service',
-                        'X-Credential-Key': template.credential
+                        'X-Service-Name': process.env.SERVICE_NAME,
+                        'Content-Type': 'application/json'
                     }
                 }
             );
 
             return createdInvoice;
         } catch (error) {
-            console.error('Error in createInvoice:', error);
-            throw error;
+            console.log(error)
         }
     }
 

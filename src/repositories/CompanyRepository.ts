@@ -29,6 +29,8 @@ export class CompanyRepository {
             [id]
         );
 
+        console.log("Company result", result.rows[0])
+
         return result.rows[0] || null;
     }
 } 

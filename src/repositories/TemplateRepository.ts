@@ -38,7 +38,6 @@ export class TemplateRepository {
             [id]
         );
 
-        console.log('Query result:', result.rows);
         return result.rows[0] || null;
     }
 
@@ -47,12 +46,12 @@ export class TemplateRepository {
      * @param companyId - Company ID
      * @returns Promise resolving to the default template if found, null otherwise
      */
-    async findDefaultByCompanyId(companyId: string): Promise<Template | null> {
+    async findDefaultByCompanyId(companyId: string): Promise<Template> {
         const result = await this.db.query(
             'SELECT * FROM templates WHERE company_id = $1 AND is_default = true',
             [companyId]
         );
-        return result.rows[0] || null;
+        return result.rows[0];
     }
 
     /**

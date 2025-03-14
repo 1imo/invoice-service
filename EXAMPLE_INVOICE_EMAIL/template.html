@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #475569;
+            --secondary-hover: #334155;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --background-light: #f8fafc;
+            --background-grey: #f1f5f9;
+            --border-color: #e2e8f0;
+            --danger-color: #dc2626;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-grey);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .email-wrapper {
+            background-color: var(--background-grey);
+            padding: 40px 20px;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-header {
+            padding: 30px 40px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            max-height: 50px;
+            width: auto;
+        }
+
+        .email-body {
+            padding: 40px;
+        }
+
+        .invoice-details {
+            background-color: var(--background-light);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .amount {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .due-date {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .button-container {
+            margin: 30px 0;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 14px 28px;
+            background-color: var(--primary-color);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            border: 1px solid var(--primary-color);
+        }
+
+        .button:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .secondary-button {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .secondary-button:hover {
+            background-color: var(--secondary-hover);
+            border-color: var(--secondary-hover);
+        }
+
+        .footer {
+            background-color: var(--background-light);
+            padding: 30px 40px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            border-radius: 0 0 8px 8px;
+        }
+
+        h2 {
+            color: var(--text-primary);
+            font-size: 24px;
+            margin: 0 0 20px 0;
+        }
+
+        p {
+            margin: 0 0 16px 0;
+            color: var(--text-primary);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 480px) {
+            .button-container {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+                box-sizing: border-box;
+                text-align: center;
+            }
+
+            .email-body {
+                padding: 20px;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .button {
+                background-color: var(--primary-color) !important;
+                color: #ffffff !important;
+                border-color: var(--primary-color) !important;
+            }
+
+            .secondary-button {
+                background-color: var(--secondary-color) !important;
+                border-color: var(--secondary-color) !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-wrapper">
+        <div class="email-container">
+            <div class="email-header">
+                <img src="${process.env.IMAGE_SERVICE_URL}/api/media/company-logo/file/${company.id}"
+                    alt="${company.name}" class="logo">
+            </div>
+
+            <div class="email-body">
+                <h2>Invoice from ${company.name}</h2>
+
+                <p>Dear ${customer.first_name} ${customer.last_name},</p>
+
+                <p>Please find attached your invoice for recent services. Here's a summary of the details:</p>
+
+                <div class="invoice-details">
+                    <p><span class="info-label">Invoice Number:</span> ${createdInvoice.reference}</p>
+                    <p><span class="info-label">Amount Due:</span> <span
+                            class="amount">${invoice.currency}${totalAmount}</span></p>
+                    <p style="margin-bottom: 0;"><span class="info-label">Due Date:</span> <span
+                            class="due-date">${createdInvoice.due_date.toLocaleDateString()}</span></p>
+                </div>
+
+                <div class="button-container">
+                    <a href="${process.env.PAYMENT_SERVICE_URL}/api/pay/${createdInvoice.id}" class="button">Pay Now</a>
+                    <a href="${process.env.INVOICE_SERVICE_URL}/api/invoices/${createdInvoice.id}/view"
+                        class="button secondary-button">View Invoice</a>
+                </div>
+
+                <p>For your convenience, you can view the invoice online or process your payment directly using the
+                    buttons above. The invoice is also attached to this email for your records.</p>
+
+                <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+            </div>
+
+            <div class="footer">
+                <p style="margin-bottom: 8px;"><strong>${company.name}</strong></p>
+                <p style="margin-bottom: 8px;">${company.address_line1}, ${company.city}, ${company.postcode}</p>
+                <p style="margin-bottom: 8px;">${company.email} | ${company.phone}</p>
+                <p style="margin-bottom: 0;">© ${new Date().getFullYear()} ${company.name}. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

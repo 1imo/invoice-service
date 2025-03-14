@@ -46,9 +46,10 @@ export class InvoiceRepository {
                 currency,
                 due_date,
                 status,
+                payment_intent_id,
                 created_at,
                 updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
             RETURNING *`,
             [
                 id,
@@ -60,7 +61,8 @@ export class InvoiceRepository {
                 invoice.amount,
                 invoice.currency,
                 invoice.due_date,
-                invoice.status
+                invoice.status,
+                invoice.payment_intent_id
             ]
         );
         return result.rows[0];
@@ -77,5 +79,23 @@ export class InvoiceRepository {
             [id]
         );
         return result.rows[0] || null;
+    }
+
+    async update(id: string, data: Partial<Invoice>): Promise<Invoice> {
+        const setClause = Object.entries(data)
+            .map(([key, _], index) => `${key} = $${index + 2}`)
+            .join(', ');
+
+        const values = Object.values(data);
+
+        const query = `
+            UPDATE invoices 
+            SET ${setClause}
+            WHERE id = $1
+            RETURNING *
+        `;
+
+        const result = await this.db.query(query, [id, ...values]);
+        return result.rows[0];
     }
 } 

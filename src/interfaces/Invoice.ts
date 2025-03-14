@@ -38,4 +38,6 @@ export interface Invoice {
     created_at: Date;
     /** Last update timestamp */
     updated_at: Date;
+    /** Stripe payment intent */
+    payment_intent_id: string | null;
 }

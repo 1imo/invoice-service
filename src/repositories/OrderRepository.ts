@@ -45,6 +45,24 @@ export class OrderRepository {
         return result.rows;
     }
 
+    async update(id: string, data: Partial<Order>): Promise<Order> {
+        const setClause = Object.entries(data)
+            .map(([key, _], index) => `${key} = $${index + 2}`)
+            .join(', ');
+
+        const values = Object.values(data);
+
+        const query = `
+            UPDATE "order" 
+            SET ${setClause}
+            WHERE id = $1
+            RETURNING *
+        `;
+
+        const result = await this.db.query(query, [id, ...values]);
+        return result.rows[0];
+    }
+
     /**
      * Finds orders by batch ID
      * @param batchId - Batch ID
