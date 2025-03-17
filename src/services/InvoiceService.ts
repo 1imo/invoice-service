@@ -101,7 +101,8 @@ export class InvoiceService {
 
             return createdInvoice;
         } catch (error) {
-            console.log(error)
+            console.error('Error creating invoice:', error);
+            throw error;
         }
     }
 
