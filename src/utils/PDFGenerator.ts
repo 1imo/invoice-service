@@ -21,19 +21,28 @@ export class PDFGenerator {
      */
     async generate(invoice: Invoice): Promise<Buffer> {
         let lastError: Error | null = null;
+        let browser = null;
 
-        // Try multiple times with delay
+        // Get the Chrome executable path
+        const executablePath = process.env.CHROME_BIN ||
+            '/usr/bin/chromium-browser' ||  // Ubuntu/Debian path
+            '/usr/bin/chromium' ||          // Alternative path
+            '/usr/bin/google-chrome';       // Fallback to Google Chrome
+
+        console.log(`Using Chrome executable at: ${executablePath}`);
+
         for (let attempt = 0; attempt < this.maxRetries; attempt++) {
             try {
                 if (attempt > 0) {
-                    // Wait before retrying
+                    console.log(`Retry attempt ${attempt + 1} of ${this.maxRetries}`);
                     await new Promise(resolve => setTimeout(resolve, this.retryDelay));
                 }
 
                 // Launch browser
-                const browser = await puppeteer.launch({
+                console.log('Launching browser...');
+                browser = await puppeteer.launch({
                     headless: true,
-                    executablePath: '/usr/bin/chromium',
+                    executablePath,
                     args: [
                         '--no-sandbox',
                         '--disable-setuid-sandbox',
