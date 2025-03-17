@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{company.name}} Invoice - {{invoice.id}}</title>
 </head>
+
 <body>
     <div class="page">
         <div class="invoice-container">
             <div class="header">
                 <div class="company-info">
-                    <img 
-                        src="{{company.logo}}"
-                        alt="Company Logo"
-                    />
+                    <img src="{{company.logo}}" alt="Company Logo" />
                     <div class="invoice-details">
                         <div class="invoice-number">Invoice No: <strong>{{invoice.id}}</strong></div>
                         <div>Date: <strong>{{invoice.created_at}}</strong></div>
                         <div>Due Date: <strong>{{invoice.due_date}}</strong></div>
                     </div>
                 </div>
-               <div class="invoice-info">
+                <div class="invoice-info">
                     <div class="qr-code">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{invoice.key_id}}" alt="QR Code"/>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data={{invoice.key_id}}"
+                            alt="QR Code" />
                     </div>
                     <div class="status-badge">{{invoice.status}}</div>
                 </div>
@@ -31,14 +31,17 @@
             <div class="parties">
                 <div class="party-details">
                     <div class="party-name">{{company.name}}</div>
-                    <div>{{company.address_line1}}{{company.address_line2}}<br>{{company.city}}<br>{{company.county}} {{company.postcode}}</div>
+                    <div>{{company.address_line1}}{{company.address_line2}}<br>{{company.city}}<br>{{company.county}}
+                        {{company.postcode}}</div>
                     <div>{{company.email}}</div>
                     <div>{{company.phone}}</div>
                 </div>
 
                 <div class="party-details">
                     <div class="party-name">{{customer.first_name}} {{customer.last_name}}</div>
-                    <div>{{customer.address_line1}}{{customer.address_line2}}<br>{{customer.city}}<br>{{customer.county}} {{customer.postcode}}</div>
+                    <div>
+                        {{customer.address_line1}}{{customer.address_line2}}<br>{{customer.city}}<br>{{customer.county}}
+                        {{customer.postcode}}</div>
                     <div>{{customer.email}}</div>
                     <div>{{customer.phone}}</div>
                 </div>
@@ -77,10 +80,6 @@
                             <span>Subtotal</span>
                             <span>{{invoice.subtotal}}</span>
                         </div>
-                        <div class="total-row">
-                            <span>Tax (20%)</span>
-                            <span>{{invoice.tax}}</span>
-                        </div>
                         <div style="margin-top: 24px; padding-top: 16px;">
                             <div class="total-row grand-total">
                                 <span>Total Due</span>
@@ -104,4 +103,5 @@
         </div>
     </div>
 </body>
+
 </html>
