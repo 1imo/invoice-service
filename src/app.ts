@@ -162,7 +162,7 @@ app.get('/api/invoices/:id',
             const subtotal = orders.reduce((sum, order) =>
                 sum + parseFloat(order.total_price), 0);
             const tax = subtotal * 0.20; // Assuming 20% tax rate
-            const total = subtotal + tax;
+            const total = subtotal;
 
             // Get customer details from first order (they'll all be the same customer)
             const customer = await orderRepository.findCustomerById(orders[0].customer_id);
